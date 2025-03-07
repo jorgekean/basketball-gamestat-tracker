@@ -14,6 +14,7 @@ export interface Stat {
     rebounds: number;
     steals: number;
     assists: number;
+    blocks: number;
 }
 
 export interface Player {
@@ -45,9 +46,11 @@ interface GameContextProps {
     gameState: GameState;
     updatePlayerStat: (playerId: string, statKey: keyof Stat, delta?: number) => void;
     substitutePlayer: (outPlayerId: string, inPlayerId: string) => void;
+    setPlayersOnCourt: (onCourtPlayerIds: string[]) => void;
     syncToFirestore: () => Promise<void>;
     syncFromFirestore: () => Promise<void>;
     loading: boolean;
+    updatePlayers: (newPlayers: Player[]) => void; // NEW: bulk update function
 }
 
 const defaultStat: Stat = {
@@ -60,9 +63,9 @@ const defaultStat: Stat = {
     rebounds: 0,
     steals: 0,
     assists: 0,
+    blocks: 0,
 };
 
-// Fallback default players (if no team is provided)
 const createDefaultPlayers = (): Player[] => [
     { id: uuidv4(), name: 'Player 1', jerseyNumber: '1', position: 'N/A', stats: { ...defaultStat }, onCourt: true },
     { id: uuidv4(), name: 'Player 2', jerseyNumber: '2', position: 'N/A', stats: { ...defaultStat }, onCourt: true },
@@ -92,7 +95,6 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, gameName, 
     const [gameState, setGameState] = useState<GameState>(defaultGameState);
     const [initialized, setInitialized] = useState(false);
 
-    // Initialize players from team data if available.
     const initializePlayersFromTeam = (team: Team): Player[] => {
         return team.players.map((p, index) => ({
             id: p.id,
@@ -100,7 +102,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, gameName, 
             jerseyNumber: p.jerseyNumber,
             position: p.position,
             stats: { ...defaultStat },
-            onCourt: index < 5, // First five players on court.
+            onCourt: index < 5,
         }));
     };
 
@@ -151,6 +153,20 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, gameName, 
         });
     };
 
+    const setPlayersOnCourt = (onCourtPlayerIds: string[]) => {
+        setGameState(prevState => {
+            const updatedPlayers = prevState.players.map(player => ({
+                ...player,
+                onCourt: onCourtPlayerIds.includes(player.id),
+            }));
+            return { ...prevState, players: updatedPlayers };
+        });
+    };
+
+    const updatePlayers = (newPlayers: Player[]) => {
+        setGameState(prevState => ({ ...prevState, players: newPlayers }));
+    };
+
     const syncToFirestore = async () => {
         try {
             await setDoc(doc(db, 'games', gameName), gameState);
@@ -183,9 +199,11 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, gameName, 
                 gameState,
                 updatePlayerStat,
                 substitutePlayer,
+                setPlayersOnCourt,
                 syncToFirestore,
                 syncFromFirestore,
                 loading: !initialized,
+                updatePlayers, // NEW function exposed here
             }}
         >
             {children}

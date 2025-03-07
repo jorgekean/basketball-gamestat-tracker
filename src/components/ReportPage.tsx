@@ -13,7 +13,7 @@ import {
     Legend,
 } from 'chart.js';
 
-// Register the necessary components for Bar charts.
+// Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const ReportPage: React.FC = () => {
@@ -21,7 +21,7 @@ const ReportPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="p-4 text-center">
+            <div className="p-6 text-center">
                 <h1 className="text-2xl font-bold">Loading report...</h1>
             </div>
         );
@@ -50,7 +50,16 @@ const ReportPage: React.FC = () => {
             100
             : 0;
 
-    // Prepare data for a horizontal bar chart.
+    // Mapping for granular stats (made/attempt)
+    const granularStats = {
+        'FT%': `${teamStats.freeThrowMade}/${teamStats.freeThrowAttempt}`,
+        '2PT%': `${teamStats.twoPtMade}/${teamStats.twoPtAttempt}`,
+        '3PT%': `${teamStats.threePtMade}/${teamStats.threePtAttempt}`,
+        'Overall FG%': `${teamStats.twoPtMade + teamStats.threePtMade}/${teamStats.twoPtAttempt + teamStats.threePtAttempt
+            }`,
+    };
+
+    // Data for the horizontal bar chart.
     const barData = {
         labels: ['FT%', '2PT%', '3PT%', 'Overall FG%'],
         datasets: [
@@ -68,10 +77,13 @@ const ReportPage: React.FC = () => {
                     'rgba(75, 192, 192, 0.7)',
                     'rgba(153, 102, 255, 0.7)',
                 ],
+                borderRadius: 8,
+                borderSkipped: false,
             },
         ],
     };
 
+    // Bar chart options with custom tooltip to show granular stats.
     const barOptions = {
         indexAxis: 'y' as const,
         responsive: true,
@@ -82,10 +94,20 @@ const ReportPage: React.FC = () => {
         plugins: {
             legend: { position: 'top' },
             title: { display: true, text: 'Team Shooting Performance' },
+            tooltip: {
+                callbacks: {
+                    label: (context: any) => {
+                        const statLabel = context.label;
+                        const percentage = context.parsed.x;
+                        const madeAttempt = granularStats[statLabel] || '';
+                        return `${statLabel}: ${percentage}% (${madeAttempt})`;
+                    },
+                },
+            },
         },
     };
 
-    // Helper function to compute individual shooting percentages.
+    // Helper functions for individual player reports.
     const computePercentages = (stats: typeof teamStats) => {
         const ft =
             stats.freeThrowAttempt > 0
@@ -104,89 +126,114 @@ const ReportPage: React.FC = () => {
         return { ft, twoPt, threePt, overall };
     };
 
-    // Helper to compute individual total points.
+    // Compute total points from shots only.
     const computeTotalPoints = (stats: typeof teamStats) => {
-        return stats.freeThrowMade + stats.twoPtMade * 2 + stats.threePtMade * 3;
+        return stats.freeThrowMade + (stats.twoPtMade * 2) + (stats.threePtMade * 3);
     };
 
+    // total SP
+    // Compute total points from shots only.
+    const computeTotalSP = (stats: typeof teamStats) => {
+        return (stats.assists * 2) + (stats.blocks * 2) + (stats.steals * 2) + stats.freeThrowMade + (stats.twoPtMade * 2) + (stats.threePtMade * 3);
+    };
+
+
+    // Sort players by total points (from shots) in descending order.
+    const sortedPlayers = [...gameState.players].sort(
+        (a, b) => computeTotalSP(b.stats) - computeTotalSP(a.stats)
+    );
+
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            <h1 className="text-3xl font-bold text-center mb-6">
+        <div className="p-6 bg-gray-50 min-h-screen font-sans">
+            <h1 className="text-3xl font-bold text-center mb-8">
                 Game Report: {gameState.gameName}
             </h1>
 
-            {/* Team Shooting Report (Horizontal Bar Chart) */}
-            <div className="mb-8">
+            {/* Team Shooting Performance Card */}
+            <div className="bg-white rounded-lg shadow p-6 mb-8">
                 <div className="mb-4 text-center">
-                    <p>Overall FG% (2PT+3PT): {teamOverallFGPercentage.toFixed(1)}%</p>
-                    <p>FT%: {teamFTPercentage.toFixed(1)}%</p>
-                    <p>2PT%: {team2PTPercentage.toFixed(1)}%</p>
-                    <p>3PT%: {team3PTPercentage.toFixed(1)}%</p>
+                    <p className="text-gray-700">
+                        FT: {teamStats.freeThrowMade}/{teamStats.freeThrowAttempt} (
+                        {teamFTPercentage.toFixed(1)}%)
+                    </p>
+                    <p className="text-gray-700">
+                        2PT: {teamStats.twoPtMade}/{teamStats.twoPtAttempt} (
+                        {team2PTPercentage.toFixed(1)}%)
+                    </p>
+                    <p className="text-gray-700">
+                        3PT: {teamStats.threePtMade}/{teamStats.threePtAttempt} (
+                        {team3PTPercentage.toFixed(1)}%)
+                    </p>
+                    <p className="text-gray-700">
+                        Overall FG: {teamStats.twoPtMade + teamStats.threePtMade}/
+                        {teamStats.twoPtAttempt + teamStats.threePtAttempt} (
+                        {teamOverallFGPercentage.toFixed(1)}%)
+                    </p>
                 </div>
-                <div className="w-full h-64">
+                <div className="w-full h-80">
                     <Bar data={barData} options={barOptions as any} />
                 </div>
             </div>
 
-            {/* Individual Player Reports */}
-            <div className="mb-8">
+            {/* Individual Player Reports Card */}
+            <div className="bg-white rounded-lg shadow p-6 mb-8">
                 <h2 className="text-2xl font-semibold mb-4 text-center">
-                    Individual Player Reports
+                    Individual Player Reports (Sorted by Total Points)
                 </h2>
                 <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white border">
+                    <table className="min-w-full text-left">
                         <thead>
-                            <tr>
-                                <th className="py-2 px-4 border">Name</th>
-                                <th className="py-2 px-4 border">Jersey</th>
-                                <th className="py-2 px-4 border">FT</th>
-                                <th className="py-2 px-4 border">2PT</th>
-                                <th className="py-2 px-4 border">3PT</th>
-                                <th className="py-2 px-4 border">Overall FG</th>
-                                <th className="py-2 px-4 border">Total Points</th>
-                                <th className="py-2 px-4 border">Rebounds</th>
-                                <th className="py-2 px-4 border">Steals</th>
-                                <th className="py-2 px-4 border">Assists</th>
+                            <tr className="border-b">
+                                <th className="py-3 px-4">Name</th>
+                                <th className="py-3 px-4">Jersey</th>
+                                <th className="py-3 px-4">FT</th>
+                                <th className="py-3 px-4">2PT</th>
+                                <th className="py-3 px-4">3PT</th>
+                                <th className="py-3 px-4">Overall FG</th>
+                                <th className="py-3 px-4">Total Points</th>
+                                <th className="py-3 px-4">Rebounds</th>
+                                <th className="py-3 px-4">Steals</th>
+                                <th className="py-3 px-4">Assists</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {gameState.players.map((player) => {
+                            {sortedPlayers.map((player) => {
                                 const { ft, twoPt, threePt, overall } = computePercentages(player.stats);
                                 const totalPoints = computeTotalPoints(player.stats);
                                 const overallMade = player.stats.twoPtMade + player.stats.threePtMade;
                                 const overallAttempt = player.stats.twoPtAttempt + player.stats.threePtAttempt;
                                 return (
-                                    <tr key={player.id}>
-                                        <td className="py-2 px-4 border">{player.name}</td>
-                                        <td className="py-2 px-4 border">{player.jerseyNumber}</td>
-                                        <td className="py-2 px-4 border">
-                                            {ft.toFixed(1)}%{' '}
-                                            <span className="text-xs text-gray-600">
+                                    <tr key={player.id} className="border-b hover:bg-gray-100">
+                                        <td className="py-2 px-4">{player.name}</td>
+                                        <td className="py-2 px-4">{player.jerseyNumber}</td>
+                                        <td className="py-2 px-4">
+                                            {ft.toFixed(1)}%
+                                            <div className="text-xs text-gray-500">
                                                 ({player.stats.freeThrowMade}/{player.stats.freeThrowAttempt})
-                                            </span>
+                                            </div>
                                         </td>
-                                        <td className="py-2 px-4 border">
-                                            {twoPt.toFixed(1)}%{' '}
-                                            <span className="text-xs text-gray-600">
+                                        <td className="py-2 px-4">
+                                            {twoPt.toFixed(1)}%
+                                            <div className="text-xs text-gray-500">
                                                 ({player.stats.twoPtMade}/{player.stats.twoPtAttempt})
-                                            </span>
+                                            </div>
                                         </td>
-                                        <td className="py-2 px-4 border">
-                                            {threePt.toFixed(1)}%{' '}
-                                            <span className="text-xs text-gray-600">
+                                        <td className="py-2 px-4">
+                                            {threePt.toFixed(1)}%
+                                            <div className="text-xs text-gray-500">
                                                 ({player.stats.threePtMade}/{player.stats.threePtAttempt})
-                                            </span>
+                                            </div>
                                         </td>
-                                        <td className="py-2 px-4 border">
-                                            {overall.toFixed(1)}%{' '}
-                                            <span className="text-xs text-gray-600">
+                                        <td className="py-2 px-4">
+                                            {overall.toFixed(1)}%
+                                            <div className="text-xs text-gray-500">
                                                 ({overallMade}/{overallAttempt})
-                                            </span>
+                                            </div>
                                         </td>
-                                        <td className="py-2 px-4 border">{totalPoints}</td>
-                                        <td className="py-2 px-4 border">{player.stats.rebounds}</td>
-                                        <td className="py-2 px-4 border">{player.stats.steals}</td>
-                                        <td className="py-2 px-4 border">{player.stats.assists}</td>
+                                        <td className="py-2 px-4">{totalPoints}</td>
+                                        <td className="py-2 px-4">{player.stats.rebounds}</td>
+                                        <td className="py-2 px-4">{player.stats.steals}</td>
+                                        <td className="py-2 px-4">{player.stats.assists}</td>
                                     </tr>
                                 );
                             })}
@@ -195,11 +242,11 @@ const ReportPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Link to go back to the Home page */}
-            <div className="text-center mt-6">
+            {/* Back to Home Button */}
+            <div className="text-center mt-8">
                 <Link
                     to="/"
-                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow transition"
+                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg shadow transition"
                 >
                     Back to Home
                 </Link>

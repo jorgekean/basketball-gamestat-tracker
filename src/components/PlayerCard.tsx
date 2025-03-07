@@ -10,179 +10,147 @@ interface PlayerCardProps {
 const PlayerCard: React.FC<PlayerCardProps> = ({ player, onSubOut }) => {
     const { updatePlayerStat } = useGameContext();
 
-    // Local state for popover visibility for scoring buttons
-    const [showOnePtPopover, setShowOnePtPopover] = React.useState(false);
-    const [showTwoPtPopover, setShowTwoPtPopover] = React.useState(false);
-    const [showThreePtPopover, setShowThreePtPopover] = React.useState(false);
-
-    const togglePopover = (group: '1Pt' | '2Pts' | '3Pts') => {
-        if (group === '1Pt') {
-            setShowOnePtPopover(!showOnePtPopover);
-            setShowTwoPtPopover(false);
-            setShowThreePtPopover(false);
-        } else if (group === '2Pts') {
-            setShowTwoPtPopover(!showTwoPtPopover);
-            setShowOnePtPopover(false);
-            setShowThreePtPopover(false);
-        } else if (group === '3Pts') {
-            setShowThreePtPopover(!showThreePtPopover);
-            setShowOnePtPopover(false);
-            setShowTwoPtPopover(false);
-        }
-    };
-
     const totalPoints =
         player.stats.freeThrowMade +
         player.stats.twoPtMade * 2 +
         player.stats.threePtMade * 3;
 
     return (
-        <div className="border rounded p-4 shadow-sm relative">
-            <h2 className="text-center text-xl font-bold mb-4">{player.name}</h2>
+        <div className="border rounded p-3 shadow-sm flex flex-col space-y-2">
+            <h2 className="text-center text-lg font-bold">{player.name}</h2>
 
-            <div className="flex flex-wrap gap-2 justify-center">
-                {/* 1Pt Button with popover for Free Throws */}
-                <div className="relative">
-                    <button
-                        onClick={() => togglePopover('1Pt')}
-                        className="bg-blue-500 text-white px-3 py-2 rounded"
-                    >
-                        1Pt
-                    </button>
-                    {showOnePtPopover && (
-                        <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1">
-                            <button
-                                onClick={() => {
-                                    updatePlayerStat(player.id, 'freeThrowMade');
-                                    updatePlayerStat(player.id, 'freeThrowAttempt');
-                                    setShowOnePtPopover(false);
-                                }}
-                                className="block text-sm text-gray-700 hover:bg-gray-200 px-2 py-1 w-full text-left"
-                            >
-                                FT Made
-                            </button>
-                            <button
-                                onClick={() => {
-                                    updatePlayerStat(player.id, 'freeThrowAttempt');
-                                    setShowOnePtPopover(false);
-                                }}
-                                className="block text-sm text-gray-700 hover:bg-gray-200 px-2 py-1 w-full text-left"
-                            >
-                                FT Missed
-                            </button>
-                        </div>
-                    )}
+            {/* Row 1: Points Actions */}
+            <div className="flex justify-around gap-2">
+                {/* Free Throw Group */}
+                <div className="flex flex-col items-center">
+                    <span className="text-xs font-semibold mb-1">Free Throw</span>
+                    <div className="flex gap-1">
+                        <button
+                            onClick={() => {
+                                updatePlayerStat(player.id, 'freeThrowMade');
+                                updatePlayerStat(player.id, 'freeThrowAttempt');
+                            }}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
+                        >
+                            Made
+                        </button>
+                        <button
+                            onClick={() => updatePlayerStat(player.id, 'freeThrowAttempt')}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
+                        >
+                            Missed
+                        </button>
+                    </div>
                 </div>
 
-                {/* 2Pts Button with popover for 2-point shots */}
-                <div className="relative">
-                    <button
-                        onClick={() => togglePopover('2Pts')}
-                        className="bg-blue-500 text-white px-3 py-2 rounded"
-                    >
-                        2Pts
-                    </button>
-                    {showTwoPtPopover && (
-                        <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1">
-                            <button
-                                onClick={() => {
-                                    updatePlayerStat(player.id, 'twoPtMade');
-                                    updatePlayerStat(player.id, 'twoPtAttempt');
-                                    setShowTwoPtPopover(false);
-                                }}
-                                className="block text-sm text-gray-700 hover:bg-gray-200 px-2 py-1 w-full text-left"
-                            >
-                                2PT Made
-                            </button>
-                            <button
-                                onClick={() => {
-                                    updatePlayerStat(player.id, 'twoPtAttempt');
-                                    setShowTwoPtPopover(false);
-                                }}
-                                className="block text-sm text-gray-700 hover:bg-gray-200 px-2 py-1 w-full text-left"
-                            >
-                                2PT Missed
-                            </button>
-                        </div>
-                    )}
+                {/* 2-Point Group */}
+                <div className="flex flex-col items-center">
+                    <span className="text-xs font-semibold mb-1">2-Point</span>
+                    <div className="flex gap-1">
+                        <button
+                            onClick={() => {
+                                updatePlayerStat(player.id, 'twoPtMade');
+                                updatePlayerStat(player.id, 'twoPtAttempt');
+                            }}
+                            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
+                        >
+                            Made
+                        </button>
+                        <button
+                            onClick={() => updatePlayerStat(player.id, 'twoPtAttempt')}
+                            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
+                        >
+                            Missed
+                        </button>
+                    </div>
                 </div>
 
-                {/* 3Pts Button with popover for 3-point shots */}
-                <div className="relative">
-                    <button
-                        onClick={() => togglePopover('3Pts')}
-                        className="bg-blue-500 text-white px-3 py-2 rounded"
-                    >
-                        3Pts
-                    </button>
-                    {showThreePtPopover && (
-                        <div className="absolute z-10 bg-white border rounded shadow p-2 mt-1">
-                            <button
-                                onClick={() => {
-                                    updatePlayerStat(player.id, 'threePtMade');
-                                    updatePlayerStat(player.id, 'threePtAttempt');
-                                    setShowThreePtPopover(false);
-                                }}
-                                className="block text-sm text-gray-700 hover:bg-gray-200 px-2 py-1 w-full text-left"
-                            >
-                                3PT Made
-                            </button>
-                            <button
-                                onClick={() => {
-                                    updatePlayerStat(player.id, 'threePtAttempt');
-                                    setShowThreePtPopover(false);
-                                }}
-                                className="block text-sm text-gray-700 hover:bg-gray-200 px-2 py-1 w-full text-left"
-                            >
-                                3PT Missed
-                            </button>
-                        </div>
-                    )}
+                {/* 3-Point Group */}
+                <div className="flex flex-col items-center">
+                    <span className="text-xs font-semibold mb-1">3-Point</span>
+                    <div className="flex gap-1">
+                        <button
+                            onClick={() => {
+                                updatePlayerStat(player.id, 'threePtMade');
+                                updatePlayerStat(player.id, 'threePtAttempt');
+                            }}
+                            className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
+                        >
+                            Made
+                        </button>
+                        <button
+                            onClick={() => updatePlayerStat(player.id, 'threePtAttempt')}
+                            className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
+                        >
+                            Missed
+                        </button>
+                    </div>
                 </div>
-
-                {/* Direct buttons for Assists, Rebounds, and Steals */}
-                <button
-                    onClick={() => updatePlayerStat(player.id, 'assists')}
-                    className="bg-green-500 text-white px-3 py-2 rounded"
-                >
-                    Asst
-                </button>
-                <button
-                    onClick={() => updatePlayerStat(player.id, 'rebounds')}
-                    className="bg-green-500 text-white px-3 py-2 rounded"
-                >
-                    Reb
-                </button>
-                <button
-                    onClick={() => updatePlayerStat(player.id, 'steals')}
-                    className="bg-green-500 text-white px-3 py-2 rounded"
-                >
-                    Stl
-                </button>
             </div>
 
-            {/* Stats summary and bottom row with total points and Sub Out button */}
-            <div className="mt-4 border-t pt-2 text-xs text-gray-600">
-                <div className="grid grid-cols-2 gap-2">
-                    <div>FT Made: {player.stats.freeThrowMade}</div>
-                    <div>FT Missed: {player.stats.freeThrowAttempt}</div>
-                    <div>2PT Made: {player.stats.twoPtMade}</div>
-                    <div>2PT Missed: {player.stats.twoPtAttempt}</div>
-                    <div>3PT Made: {player.stats.threePtMade}</div>
-                    <div>3PT Missed: {player.stats.threePtAttempt}</div>
-                    <div>Reb: {player.stats.rebounds}</div>
-                    <div>Stl: {player.stats.steals}</div>
-                    <div>Asst: {player.stats.assists}</div>
-                </div>
-                <div className="mt-2 flex items-center justify-between">
-                    <div className="font-semibold text-sm text-gray-700">Total Points: {totalPoints}</div>
+            {/* Row 2: Other Actions */}
+            <div className="flex justify-around gap-2">
+                {/* Assist */}
+                <div className="flex flex-col items-center">
+                    <span className="text-xs font-semibold mb-1">Assist</span>
                     <button
-                        onClick={() => onSubOut(player.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm"
+                        onClick={() => updatePlayerStat(player.id, 'assists')}
+                        className="bg-green-500 hover:bg-green-600 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
                     >
-                        Sub Out
+                        +
                     </button>
                 </div>
+                {/* Rebound */}
+                <div className="flex flex-col items-center">
+                    <span className="text-xs font-semibold mb-1">Rebound</span>
+                    <button
+                        onClick={() => updatePlayerStat(player.id, 'rebounds')}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
+                    >
+                        +
+                    </button>
+                </div>
+                {/* Steal */}
+                <div className="flex flex-col items-center">
+                    <span className="text-xs font-semibold mb-1">Steal</span>
+                    <button
+                        onClick={() => updatePlayerStat(player.id, 'steals')}
+                        className="bg-sky-500 hover:bg-sky-600 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
+                    >
+                        +
+                    </button>
+                </div>
+                {/* Block */}
+                <div className="flex flex-col items-center">
+                    <span className="text-xs font-semibold mb-1">Block</span>
+                    <button
+                        onClick={() => updatePlayerStat(player.id, 'blocks')}
+                        className="bg-fuchsia-500 hover:bg-fuchsia-600 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
+                    >
+                        +
+                    </button>
+                </div>
+            </div>
+
+            {/* Row 3: Summary Stats and Sub Out */}
+            <div className="flex items-center justify-between text-sm border-t pt-2">
+                <div>
+                    <div>Total: {totalPoints}</div>
+                    <div className="grid grid-cols-2 gap-1 text-xs sm:text-sm">
+                        <div>FT: {player.stats.freeThrowMade}/{player.stats.freeThrowAttempt}</div>
+                        <div>2PT: {player.stats.twoPtMade}/{player.stats.twoPtAttempt}</div>
+                        <div>3PT: {player.stats.threePtMade}/{player.stats.threePtAttempt}</div>
+                        <div>
+                            A: {player.stats.assists} R: {player.stats.rebounds} S: {player.stats.steals} B: {player.stats.blocks}
+                        </div>
+                    </div>
+                </div>
+                <button
+                    onClick={() => onSubOut(player.id)}
+                    className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-md transition-all duration-200 ease-in-out transform active:scale-95"
+                >
+                    Sub Out
+                </button>
             </div>
         </div>
     );

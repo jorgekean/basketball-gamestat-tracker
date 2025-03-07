@@ -3,13 +3,17 @@ import React, { useState } from 'react';
 import { useGameContext } from '../context/GameContext';
 import PlayerCard from './PlayerCard';
 import SubstitutionModal from './SubstitutionModal';
+import ManualEditModal from './ManualEditModal';
 import { FaCloudUploadAlt, FaCloudDownloadAlt } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import PlayerSelectionModal from './PlayerSelectionModal';
 
 const GameTracker: React.FC = () => {
     const { gameState, syncToFirestore, syncFromFirestore, loading } = useGameContext();
     const [showSubModal, setShowSubModal] = useState(false);
+    const [showPlayerSelectionModal, setShowPlayerSelectionModal] = useState(false);
     const [defaultSubOutId, setDefaultSubOutId] = useState<string>('');
+    const [showManualEditModal, setShowManualEditModal] = useState(false);
     const navigate = useNavigate();
 
     if (loading) {
@@ -42,10 +46,14 @@ const GameTracker: React.FC = () => {
         <div className="min-h-screen bg-gray-50">
             {/* Sticky header */}
             <div className="sticky top-0 z-50 bg-gray-50 shadow-md p-4">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-extrabold">Game Tracker</h1>
-                    <div className="flex flex-col items-end">
-                        <div className="flex space-x-2">
+                <div className="flex flex-col md:flex-row items-center justify-between">
+                    <h1 className="text-3xl font-extrabold mb-2 md:mb-0">
+                        <Link to="/" className="hover:underline">
+                            Game Tracker
+                        </Link>
+                    </h1>
+                    <div className="w-full md:w-auto flex flex-col items-center md:items-end">
+                        <div className="flex space-x-2 mb-2">
                             <button
                                 onClick={syncToFirestore}
                                 className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded transition"
@@ -61,23 +69,38 @@ const GameTracker: React.FC = () => {
                                 <FaCloudDownloadAlt className="w-4 h-4" />
                             </button>
                         </div>
-                        <div className="mt-1 text-gray-800 text-sm font-bold whitespace-nowrap">
+                        <div className="text-gray-800 text-sm font-bold whitespace-nowrap mb-2">
                             Team Total Points: {teamTotalPoints}
                         </div>
-                        {/* New "View Report" button */}
-                        <button
-                            onClick={() => navigate(`/report/${encodeURIComponent(gameState.gameName)}`)}
-                            className="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                        >
-                            View Report
-                        </button>
+                        <div className="flex flex-wrap justify-center md:justify-end gap-2">
+                            <button
+                                onClick={() =>
+                                    navigate(`/report/${encodeURIComponent(gameState.gameName)}`)
+                                }
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                            >
+                                View Report
+                            </button>
+                            <button
+                                onClick={() => setShowPlayerSelectionModal(true)}
+                                className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-sm"
+                            >
+                                Select Players
+                            </button>
+                            <button
+                                onClick={() => setShowManualEditModal(true)}
+                                className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm"
+                            >
+                                Manual Edit
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Main content with player cards */}
-            <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 md:p-6">
+                <div className="grid grid-cols-1 gap-4">
                     {onCourtPlayers.map((player) => (
                         <PlayerCard key={player.id} player={player} onSubOut={openSubModal} />
                     ))}
@@ -89,6 +112,14 @@ const GameTracker: React.FC = () => {
                     defaultSubOutId={defaultSubOutId}
                     closeModal={() => setShowSubModal(false)}
                 />
+            )}
+
+            {showManualEditModal && (
+                <ManualEditModal closeModal={() => setShowManualEditModal(false)} />
+            )}
+
+            {showPlayerSelectionModal && (
+                <PlayerSelectionModal closeModal={() => setShowPlayerSelectionModal(false)} />
             )}
         </div>
     );
